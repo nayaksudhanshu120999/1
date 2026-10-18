@@ -6,6 +6,7 @@ namespace QuickPalette
         App();
     }
 
+    [default_interface]
     unsealed runtimeclass MainWindow : Microsoft.UI.Xaml.Window
     {
         MainWindow();
