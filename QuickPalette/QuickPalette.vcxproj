@@ -16,7 +16,6 @@
     <ProjectGuid>{6E7A14E0-59CF-4A8E-8B76-9A8E70F0D3AE}</ProjectGuid>
     <RootNamespace>QuickPalette</RootNamespace>
     <CppWinRTRootNamespaceAutoMerge>true</CppWinRTRootNamespaceAutoMerge>
-    <NuGetTargetMoniker>UAP,Version=v10.0</NuGetTargetMoniker>
     <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformMinVersion>10.0.19041.0</WindowsTargetPlatformMinVersion>
     <AppContainerApplication>false</AppContainerApplication>
@@ -30,6 +29,7 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
+    <ResolveNuGetPackages>false</ResolveNuGetPackages>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
