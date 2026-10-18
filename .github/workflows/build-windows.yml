@@ -1,0 +1,41 @@
+name: Build QuickPalette
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: microsoft/setup-msbuild@v2
+
+      - name: Build Release x64
+        run: msbuild QuickPalette.sln /m /restore /p:Configuration=Release /p:Platform=x64 /verbosity:minimal
+
+      - name: Stage runnable app
+        shell: pwsh
+        run: |
+          $output = "QuickPalette/out/Release/x64"
+          $stage = "QuickPalette-stage"
+          New-Item -ItemType Directory -Path $stage | Out-Null
+          Get-ChildItem -Path $output -File |
+            Where-Object { $_.Extension -in @(".exe", ".dll", ".pri", ".xbf") } |
+            Copy-Item -Destination $stage
+          if (-not (Test-Path "$stage/QuickPalette.exe")) {
+            throw "Build did not produce QuickPalette.exe."
+          }
+          Compress-Archive -Path "$stage/*" -DestinationPath QuickPalette-windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuickPalette-windows-x64
+          path: QuickPalette-windows-x64.zip
+          if-no-files-found: error
+          retention-days: 14
