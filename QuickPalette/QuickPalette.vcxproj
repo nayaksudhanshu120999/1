@@ -99,5 +99,11 @@
     <PackageReference Include="Microsoft.Windows.CppWinRT" Version="2.0.240405.15" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250205002" />
   </ItemGroup>
+  <Target Name="NormalizeCppWinRTToolPath"
+          BeforeTargets="CppWinRTMakePlatformProjection;CppWinRTMakeReferenceProjection;CppWinRTMakeComponentProjection">
+    <PropertyGroup>
+      <CppWinRTPath Condition="'$(CppWinRTPath)' != ''">$([System.String]::Copy('$(CppWinRTPath)').Replace('\', '/'))</CppWinRTPath>
+    </PropertyGroup>
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
