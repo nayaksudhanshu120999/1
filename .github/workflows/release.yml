@@ -1,0 +1,47 @@
+name: release
+
+# Push a tag like v0.1.0 and this publishes a downloadable build.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-x64-release
+
+      - name: Test
+        run: cargo test --release
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $staging = "staging"
+          New-Item -ItemType Directory -Path $staging -Force | Out-Null
+          Copy-Item "target/release/cmdpal.exe" $staging
+          if (Test-Path "config.toml") { Copy-Item "config.toml" $staging }
+          if (Test-Path "README.md")   { Copy-Item "README.md"   $staging }
+          Compress-Archive -Path "$staging/*" -DestinationPath "cmdpal-windows-x64.zip" -Force
+          "size: {0:N0} bytes" -f (Get-Item "cmdpal-windows-x64.zip").Length
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: cmdpal-windows-x64.zip
+          generate_release_notes: true
+          draft: false

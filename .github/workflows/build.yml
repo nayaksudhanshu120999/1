@@ -1,0 +1,24 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build
+        run: cargo build --release --locked
+      - name: Size report
+        run: |
+          $f = "target\release\cmdpal.exe"
+          "{0:N0} bytes" -f (Get-Item $f).Length
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cmdpal-windows-x64
+          path: target/release/cmdpal.exe
