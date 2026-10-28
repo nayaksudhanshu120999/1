@@ -1,0 +1,171 @@
+// palette.slint - single window, no images, no blur: the lightest thing
+// that still looks native-ish. All data is pushed from Rust.
+
+export struct Row {
+    title: string,
+    detail: string,
+    badge: string,
+}
+
+export component PaletteWindow inherits Window {
+    in property <[Row]> rows;
+    in-out property <int> selected: 0;
+    in-out property <string> query: "";
+    in property <string> status: "Type to search.  Tab for actions, Enter to run.";
+    in property <color> accent: #4c8dff;
+    in property <bool> show-hints: false;
+
+    callback query-changed(string);
+    callback accepted();
+    callback move-up();
+    callback move-down();
+    callback dismissed();
+    callback query-submitted(string);
+
+    title: "cmdpal";
+    width: 700px;
+    height: 440px;
+    background: #101216;
+
+    VerticalLayout {
+        padding: 10px;
+        spacing: 8px;
+
+        // ---- search field -------------------------------------------------
+        Rectangle {
+            height: 48px;
+            border-radius: 10px;
+            background: #191c22;
+            border-width: 1px;
+            border-color: input.has-focus ? root.accent : #23262e;
+
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 10px;
+                spacing: 8px;
+                alignment: center;
+
+                Text {
+                    text: ">";
+                    color: root.accent;
+                    font-size: 16px;
+                    vertical-alignment: center;
+                }
+
+                input := LineEdit {
+                    vertical-alignment: center;
+                    font-size: 16px;
+                    placeholder-text: "Search apps, files, or type 12*8,  g rust ...";
+                    edited(text) => {
+                        root.query = text;
+                        root.selected = 0;
+                        root.query-changed(text);
+                    }
+                    accepted() => { root.accepted(); }
+                }
+            }
+        }
+
+        // ---- result list --------------------------------------------------
+        Rectangle {
+            border-radius: 10px;
+            background: #191c22;
+            clip: true;
+
+            ListView {
+                viewport-width: self.width;
+                viewport-height: self.height;
+                for row[i] in root.rows : Rectangle {
+                    height: 44px;
+                    border-radius: 8px;
+                    background: i == root.selected ? #24314a : transparent;
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        spacing: 10px;
+                        alignment: center;
+
+                        Rectangle {
+                            width: 44px;
+                            height: 24px;
+                            border-radius: 6px;
+                            background: i == root.selected ? root.accent : #262a33;
+                            Text {
+                                text: row.badge;
+                                color: i == root.selected ? #0b0d10 : #9aa4b2;
+                                font-size: 10px;
+                                font-weight: 700;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        VerticalLayout {
+                            alignment: center;
+                            spacing: 0px;
+                            Text {
+                                text: row.title;
+                                color: #e8ecf2;
+                                font-size: 14px;
+                                overflow: elide;
+                            }
+                            Text {
+                                text: row.detail;
+                                color: #7d8694;
+                                font-size: 11px;
+                                overflow: elide;
+                            }
+                        }
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.selected = i;
+                            root.accepted();
+                        }
+                    }
+                }
+            }
+
+            // empty state
+            if root.rows.length == 0 : Text {
+                text: "No matches";
+                color: #5c6470;
+                font-size: 13px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        // ---- status bar ---------------------------------------------------
+        HorizontalLayout {
+            height: 18px;
+            Text {
+                text: root.status;
+                color: #6a7280;
+                font-size: 11px;
+                overflow: elide;
+            }
+        }
+    }
+
+    // ---- keyboard ---------------------------------------------------------
+    // LineEdit owns focus; unhandled keys bubble up to this scope.
+    FocusScope {
+        key-pressed(event) => {
+            if (event.text == Key.DownArrow) { root.move-down(); return EventResult.accept; }
+            if (event.text == Key.UpArrow) { root.move-up(); return EventResult.accept; }
+            if (event.text == Key.Escape) { root.dismissed(); return EventResult.accept; }
+            return EventResult.reject;
+        }
+    }
+
+    public function focus-input() {
+        input.focus();
+    }
+
+    init => {
+        input.focus();
+    }
+}

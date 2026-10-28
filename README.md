@@ -1,37 +1,33 @@
-# QuickPalette
+# cmdpal
 
-QuickPalette is a small C++/WinUI 3 launcher for Windows. Press **Ctrl+Space**
-to open the centered search palette, type an app name to find a Start menu
-shortcut, or choose **Search the web** to search in your default browser.
-Press **Enter** to launch the first matching app (or search the web if there
-are no app matches), and **Esc** to hide the palette. The app stays in the
-notification area so the global shortcut remains available; choose **Exit**
-from its tray menu to close it.
+A small, fast command palette for Windows, written in Rust with a Slint UI.
+Type to search installed apps and shortcuts, do arithmetic inline, and fire
+web searches with bangs.
 
-The launcher indexes Start menu shortcuts once at startup and filters that
-small in-memory list as you type. While hidden it waits for Windows messages
-and does no polling, so idle CPU use is negligible. A global hotkey does require
-a resident process and therefore cannot use literally zero memory.
+## Build
 
-## Get a Windows build without a Windows PC
+```bash
+cargo build --release
+# target\release\cmdpal.exe
+```
 
-The source is a Visual Studio C++/WinUI 3 project. This Linux workspace does
-not include the Windows SDK, MSVC, or Windows App SDK, so it cannot compile the
-executable locally. The included GitHub Actions workflow builds it on a
-Microsoft-hosted Windows runner:
+Requires a recent stable Rust and the MSVC toolchain on Windows.
 
-1. Push this repository to GitHub.
-2. In **Actions**, run **Build QuickPalette** (or push to the `main` branch).
-3. Download the **QuickPalette-windows-x64** workflow artifact.
-4. Extract the ZIP and run `QuickPalette.exe`.
+## Use
 
-The build is unpackaged and self-contained, so the extracted output directory
-must stay together; it is not a single-file executable. The first launch may
-be blocked by Windows SmartScreen because the app is not code-signed. If
-`Ctrl+Space` is already reserved by Windows or another app, choose a different
-shortcut before running the app (the current version reports the conflict and
-exits).
+- `Alt+Space` toggles the palette (configurable).
+- Type to filter. `Up`/`Down` to move, `Enter` to run, `Esc` to hide.
+- `12*8+3` or `=sqrt` style arithmetic is evaluated inline; `Enter` copies it.
+- `g rust async` sends the query to Google. Bangs live in `config.toml`.
+- Config and cache live in `%APPDATA%\cmdpal\`.
 
-To build in Visual Studio, install **Visual Studio 2022** with the **Desktop
-development with C++** workload and a Windows 10/11 SDK, then open
-`QuickPalette.sln` and build the **Release / x64** configuration.
+## Design notes
+
+Everything is built around three rules:
+
+1. **The window paints before the index exists.** Cached entries are loaded
+   from disk, shown immediately, then a background thread rescans.
+2. **Nothing per-keystroke allocates in proportion to corpus size.** Entries
+   carry pre-folded lowercase strings; scoring walks chars, no `to_lowercase`.
+3. **Only visible rows cross the UI boundary.** At most `max_results` rows are
+   pushed into the Slint model, so layout cost is constant.
